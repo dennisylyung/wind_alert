@@ -18,7 +18,7 @@ LOCATIONS = {'TMTWSC': 'Tai Mei Tuk',
 EXPECTED_DIMENSIONS = (
     'Time (Hour)', 'Temperature (oC)', 'Wind Speed (km/h)', 'Wind Direction', '3-Hourly Rainfall (mm)')
 
-ALERT_RECIPIENT = os.environ.get('ALERT_RECIPIENT')
+SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN')
 
 
 class ThreeHourForecast:
@@ -111,26 +111,26 @@ def generate_alert(date_locations: List[Tuple[date, str, List[ThreeHourForecast]
 
     message_body = ''
     for forecast_date, locations in date_location_groups.items():
-        message_body += f'<h1>{forecast_date.strftime("%Y-%m-%d (%a)")}</h1>'
+        message_body += f'{forecast_date.strftime("%Y-%m-%d (%a)")}\n'
         for location, forecasts in locations.items():
-            message_body += f'<h2>{LOCATIONS[location]}</h2>'
-            message_body += '<br>'.join([forecast.summary() for forecast in forecasts])
+            message_body += f'{LOCATIONS[location]}\n'
+            message_body += '\n'.join(['\t' + forecast.summary() for forecast in forecasts])
+            message_body += '\n'
 
     return message_subject, message_body
 
 
 def send_alert(message_subject: str, message_body: str) -> None:
     """
-    Send the alert using AWS SES
+    Send the alert using AWS SNS
     :param message_subject: email subject
     :param message_body: email body in html format
     """
-    client = boto3.client('ses')
-    response = client.send_email(
-        Source=ALERT_RECIPIENT,
-        Destination={'ToAddresses': [ALERT_RECIPIENT]},
-        Message={'Subject': {'Data': message_subject, 'Charset': 'UTF-8'},
-                 'Body': {'Html': {'Data': message_body, 'Charset': 'UTF-8'}}}
+    client = boto3.client('sns')
+    response = client.publish(
+        TopicArn=SNS_TOPIC_ARN,
+        Subject=message_subject,
+        Message=message_body
     )
     logging.info(f'Alert sent, message id = {response.get("MessageId", "Not Found")}')
 
