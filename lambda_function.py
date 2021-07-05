@@ -157,7 +157,7 @@ def lambda_handler(event, context):
             strong_wind_hours = [forecast for forecast in forecasts if forecast.is_strong]
             if strong_wind_hours:  # at least 3 hours of strong wind
                 strong_wind_date_locations.append((forecast_date, location, strong_wind_hours))
-                logging.info(f'Strong wind detected: {forecast_date.strftime("%m/%Y")}\n'
+                logging.info(f'Strong wind detected: {forecast_date.strftime("%d/%m")}\n'
                              f'{", ".join([forecast.summary() for forecast in strong_wind_hours])}')
     logging.info(f'All forecasts checked in {time.time() - s:.2f}s')
 
